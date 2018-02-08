@@ -1,8 +1,7 @@
 import os
+import csv
 
 import twitter
-from pandas.io.json import json_normalize
-from flatten_json import flatten_json
 
 TOKENS = {
     'consumer_key': os.environ.get('TWITTER_CONSUMER_KEY'),
@@ -10,6 +9,9 @@ TOKENS = {
     'access_token_key': os.environ.get('TWITTER_ACCESS_TOKEN_KEY'),
     'access_token_secret': os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 }
+
+FIELDS = ['link', 'favorites', 'retweets', 'user']
+
 
 def main():
     favorites = []
@@ -32,7 +34,7 @@ def main():
             break
 
         # Save results
-        favorites = [*favorites, *[flatten_json(res.AsDict()) for res in results]]
+        favorites = [*favorites, *[res.AsDict() for res in results]]
         print(f'  Fetched {len(favorites)}. max_id={offset}', end='\r')
 
         # Save last ID for later
@@ -44,7 +46,17 @@ def main():
             break
 
     # Export result in CSV format.
-    json_normalize(favorites).to_csv('out.csv', sep='\t')
+    with open('out.csv', 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=FIELDS, quoting=csv.QUOTE_MINIMAL)
+        writer.writeheader()
+
+        for favorite in favorites:
+            writer.writerow({
+                'link': 'https://twitter.com/team_vitality/status/'+favorite['id_str'],
+                'favorites': favorite['favorite_count'],
+                'retweets': favorite.get('retweet_count', 0),
+                'user': favorite['user']['screen_name']
+            })
 
 
 if __name__ == '__main__':

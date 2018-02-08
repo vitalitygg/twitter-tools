@@ -9,8 +9,5 @@ python_version = '3.6'
 [packages]
 
 "python-twitter" = "*"
-pandas = "*"
-"flatten_json" = "*"
-
 
 [dev-packages]
